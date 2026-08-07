@@ -1,0 +1,79 @@
+!pip install scipy matplotlib numpy
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import buttord, butter, freqz, lfilter, tf2zpk
+
+# Clear previous plots
+plt.close('all')
+
+# Specifications
+Fs = 10000      # Sampling Frequency (Hz)
+Fp = 1000       # Passband Frequency (Hz)
+Fst = 1500      # Stopband Frequency (Hz)
+
+# Normalize frequencies
+Wp = Fp / (Fs / 2)
+Ws = Fst / (Fs / 2)
+
+# Butterworth Filter Design
+N, Wn = buttord(Wp, Ws, 1, 60)
+b, a = butter(N, Wn, btype='low')
+
+# Frequency Response
+w, h = freqz(b, a, worN=1024)
+
+plt.figure(figsize=(8,4))
+plt.plot(w * Fs / (2 * np.pi), 20 * np.log10(abs(h)))
+plt.title("Butterworth Filter Frequency Response")
+plt.xlabel("Frequency (Hz)")
+plt.ylabel("Magnitude (dB)")
+plt.grid(True)
+plt.show()
+
+# Impulse Response
+impulse = np.zeros(50)
+impulse[0] = 1
+response = lfilter(b, a, impulse)
+
+plt.figure(figsize=(8,4))
+plt.stem(range(50), response)
+plt.title("Impulse Response")
+plt.xlabel("Samples")
+plt.ylabel("Amplitude")
+plt.grid(True)
+plt.show()
+
+# Step Response
+step = np.ones(50)
+step_response = lfilter(b, a, step)
+
+plt.figure(figsize=(8,4))
+plt.stem(range(50), step_response)
+plt.title("Step Response")
+plt.xlabel("Samples")
+plt.ylabel("Amplitude")
+plt.grid(True)
+plt.show()
+
+# Pole-Zero Plot
+zeros, poles, gain = tf2zpk(b, a)
+
+plt.figure(figsize=(6,6))
+plt.scatter(np.real(zeros), np.imag(zeros), marker='o', label='Zeros')
+plt.scatter(np.real(poles), np.imag(poles), marker='x', label='Poles')
+
+# Unit Circle
+theta = np.linspace(0, 2*np.pi, 300)
+plt.plot(np.cos(theta), np.sin(theta))
+
+plt.xlabel("Real")
+plt.ylabel("Imaginary")
+plt.title("Pole-Zero Plot")
+plt.grid(True)
+plt.axis('equal')
+plt.legend()
+plt.show()
+
+# Display Results
+print("Minimum Filter Order (N) =", N)
+print("Cutoff Frequency (Wn) =", round(Wn, 4))
